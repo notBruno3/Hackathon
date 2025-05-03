@@ -19,14 +19,19 @@ Bill is a **Vue + FastAPI** powered web app for managing shared expenses in grou
 
 ## 🌐 API Endpoints
 
-| Method | Endpoint                        | Description               |
-|--------|---------------------------------|---------------------------|
-| POST   | `/event`                        | Create new event          |
-| POST   | `/event/{event_id}/join`        | Join an existing event    |
-| POST   | `/event/{event_id}/finalize`    | Finalize the event        |
-| GET    | `/event/{event_id}`             | Get event details         |
-| GET    | `/events`                       | List all events           |
-| POST   | `/event/{event_id}/message`     | AI chat expense input     |
+| Method | Endpoint                              | Description                                 |
+|--------|----------------------------------------|---------------------------------------------|
+| POST   | `/event`                               | Create new event                            |
+| POST   | `/event/{event_id}/join`               | Join an existing event                      |
+| POST   | `/event/{event_id}/finalize`           | Finalize the event                          |
+| POST   | `/event/{event_id}/message`            | AI chat expense input                       |
+| POST   | `/event/{event_id}/participant`        | Add a participant to the event              |
+| GET    | `/event/{event_id}`                    | Get full event details                      |
+| GET    | `/event/{event_id}/participants`       | Get list of participants in the event       |
+| GET    | `/event/{event_id}/messages`           | Get all messages from the event             |
+| GET    | `/events/{user_id}`                    | Get all events linked to a specific user ID |
+| WS     | `/ws/{event_id}`                       | WebSocket endpoint for real-time chat       |
+
 
 ---
 

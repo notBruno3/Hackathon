@@ -3,7 +3,7 @@
       <div class="chat-view-card">
         <div class="chat-header">
           <button class="back-button" @click="goBack">←</button>
-          <h2>{{ eventId }}</h2>
+          <h2>{{ eventName }}</h2>
   
           <div class="user-icon-container" @click="toggleUserPopup">
             <img
@@ -22,9 +22,8 @@
           :submitButtonStyles="submitButtonStyles"
           :history="history"
           demo="true"
-          :connect="{ stream: true }"
           :request="{
-            url: 'http://localhost:8000/submit',
+            url: `http://localhost:8000/event/${this.eventId}/message`,
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: { user: 'Alice', event_id: Number(eventId) }
@@ -63,53 +62,47 @@
       toggleUserPopup() {
             this.showUserPopup = !this.showUserPopup
         },
-        finalizeEvent() {
-            // Replace with actual API call
-            fetch(`http://localhost:8000/finalize/${this.eventId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                event_id: this.eventId
-                })
-            })
-                .then(res => res.json())
-                .then(data => {
-                console.log('Event finalized:', data)
+      finalizeEvent() {
+          // Replace with actual API call
+          fetch(`http://localhost:8000/${this.eventId}/finalize/`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+              event_id: this.eventId
+              })
+          })
+              .then(res => res.json())
+              .then(data => {
+              console.log('Event finalized:', data)
                 alert('Event finalized successfully!')
-                })
-                .catch(err => {
+              })
+              .catch(err => {
                 console.error('Error finalizing event:', err)
                 alert('Failed to finalize event.')
-                });
-            }
-
-    },
+              });
+          },
+    async fetchEventDetails() {
+      try {
+        const response = await fetch(`http://localhost:8000/event/${this.eventId}`);
+        const data = await response.json();
+        this.eventName = data.name;
+      } catch (err) {
+        console.error('Failed to fetch event details:', err);
+        this.eventName = 'Unknown Event';
+      }
+    }
+  },
     data() {
       return {
+        
+        eventName: '',
         showUserPopup: false,
 
         users: [
       { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
       { name: 'Bob', iban: 'NL89BUNQ0987654321' }
         ],
+        
 
 
         textInput: {
@@ -222,7 +215,10 @@
         history: [
           { text: 'New event created! Add your expenses', role: 'ai' },
         ]
-      }
+      } 
+    }, 
+    mounted() {
+       this.fetchEventDetails(); // Called when component is mounted
     }
   }
   </script>
@@ -411,6 +407,8 @@
   width: 100%;
   max-width: 800px;
   display: flex;
+  justify-content: center;
+  align-items: center;
   flex-direction: column;
 }
   

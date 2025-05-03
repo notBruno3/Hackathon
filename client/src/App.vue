@@ -8,6 +8,16 @@
 
 <script>
 export default {
+  data() {
+    return {
+      uid: crypto.randomUUID()
+    };
+  },
+  provide() {
+    return {
+      globalUid: this.uid
+    };
+  },
   name: 'App'
-}
+};
 </script>

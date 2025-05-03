@@ -9,7 +9,12 @@
           <h3>Existing Events</h3>
           <ul>
             <li v-for="event in events" :key="event.id" @click="goToEvent(event.id)">
-              {{ event.name }} (ID: {{ event.id }})
+              <div class="event-name">{{ event.name }}</div>
+              <div
+                class="event-status-dot"
+                :class="{ active: event.is_active, inactive: !event.is_active }"
+                title="Status"
+              ></div>
             </li>
           </ul>
         </div>
@@ -19,23 +24,63 @@
   
   <script>
   export default {
+    inject: ['globalUid'],
     data() {
       return {
         eventName: '',
-        events: [{ name: "Event" || 'Untitled Event', id: 10000 }
-        ] // Store created events
+        events: []
       }
     },
     methods: {
       async createEvent() {
-        const eventId = Math.floor(Math.random() * 100000);
-        this.events.push({ name: this.eventName || 'Untitled Event', id: eventId });
-        this.eventName = '';
-        this.$router.push(`/chat/${eventId}`);
-      },
-      goToEvent(id) {
-        this.$router.push(`/chat/${id}`);
+      if (!this.eventName.trim()) {
+        alert("Please enter an event name.");
+        return;
       }
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/event", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event_name: this.eventName, admin_name: "Alice" })
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to create event");
+        }
+
+        const data = await response.json();
+        
+        this.$router.push(`/chat/${data.event_id}`);
+      } catch (error) {
+        console.error(error);
+        alert("Something went wrong while creating the event.");
+      }
+    },
+
+      
+    async fetchEvents() {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/events", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+
+        const data = await response.json();
+        this.events = Object.values(data);
+      } catch (error) {
+        console.error("Failed to load events:", error);
+      }
+    },
+
+    goToEvent(id) {
+      this.$router.push(`/chat/${id}`);
+    }
+    },
+    mounted() {
+      this.fetchEvents();
     }
   }
   </script>
@@ -44,9 +89,52 @@
 
   <style scoped>
 
+.event-status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 4px;
+  margin-left: auto;
+  margin-right: 0;
+  background-color: gray; /* fallback */
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.event-status-dot.active {
+  background-color: #22c55e; /* green */
+}
+
+.event-status-dot.inactive {
+  background-color: #ef4444; /* red */
+}
+
+.event-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.event-id {
+  font-size: 0.8rem;
+  color: #bbbbbb;
+}
+
 .event-list {
   margin-top: 2rem;
   text-align: left;
+
+  max-height: 400px;     
+  overflow-y: auto;
+  padding-right: 0.5rem;  /* prevent scrollbar from overlapping text */
+}
+
+.event-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.event-list::-webkit-scrollbar-thumb {
+  background-color: #444;
+  border-radius: 4px;
 }
 
 .event-list h3 {

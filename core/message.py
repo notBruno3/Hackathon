@@ -1,0 +1,12 @@
+from datetime import datetime
+from uuid import uuid4
+
+class Message:
+    def __init__(self, sender_id: str, text: str, timestamp: datetime = None):
+        self.id = str(uuid4())
+        self.sender_id = sender_id  # references a Participant
+        self.text = text
+        self.timestamp = timestamp
+
+    def __repr__(self):
+        return f"Message(from={self.sender_id}, text='{self.text[:20]}...')"

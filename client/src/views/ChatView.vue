@@ -32,17 +32,19 @@
         />
   
         <!--USER LIST PANEL -->
-        <div v-if="showUserPopup" class="user-list-panel">
-          <h3>Linked Users</h3>
-          <ul class="user-list">
-            <li v-for="user in users" :key="user.iban">
-              <div class="user-entry">
-                <strong>{{ user.name }}</strong><br />
-                <span class="iban">{{ user.iban }}</span>
-              </div>
-            </li>
-          </ul>
-        </div>
+        <transition name="fade-slide">
+            <div v-if="showUserPopup" class="user-list-panel">
+            <h3>Linked Users</h3>
+            <ul class="user-list">
+                <li v-for="user in users" :key="user.iban">
+                <div class="user-entry">
+                    <strong>{{ user.name }}</strong><br />
+                    <span class="iban">{{ user.iban }}</span>
+                </div>
+                </li>
+            </ul>
+            </div>
+        </transition>
 
         <button class="finalize-button" @click="finalizeEvent">Finalize Event</button>
 
@@ -272,6 +274,33 @@
 }
 
 
+/* Entering */
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+.fade-slide-enter-active {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.fade-slide-enter-to {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Leaving */
+.fade-slide-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+.fade-slide-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+
 .user-list-panel {
   position: absolute;
   top: 2rem;
@@ -362,48 +391,13 @@
   filter: brightness(1000%) invert(1) saturate(0%) contrast(10000%);
 }
 
-.user-popup {
-  position: absolute;
-  top: 80px;
-  right: 40px;
-  background-color: #1a1a1a;
-  padding: 1rem;
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
-  color: #ffffff;
-  width: 250px;
-  z-index: 10;
-}
-
-.user-popup h3 {
-  margin-top: 0;
-  font-size: 1.1rem;
-  color: #ffffff;
-  border-bottom: 1px solid #333;
-  padding-bottom: 0.5rem;
-}
-
-.user-popup ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.user-popup li {
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #333;
-}
-
-.user-popup li:last-child {
-  border-bottom: none;
-}
 
 
 
 
   .chat-view-wrapper {
     background-color: #242424;
-    min-height: 100vh;
+    min-height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;

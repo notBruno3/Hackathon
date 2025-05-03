@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <transition name="fade" mode="out-in">
+    <transition name="fade-page" mode="out-in">
       <router-view />
     </transition>
   </div>

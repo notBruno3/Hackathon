@@ -397,7 +397,7 @@
 
   .chat-view-wrapper {
     background-color: #242424;
-    min-height: 100vh;
+    min-height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;

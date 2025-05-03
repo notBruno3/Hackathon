@@ -5,6 +5,7 @@ from core.participant import Participant
 from core.message import Message
 from core.event_manager import EventManager
 from services.websocket_manager import WebSocketManager
+from services.bunq_service import BunqService
 
 from services.model_manager import ModelManager
 
@@ -12,6 +13,7 @@ router = APIRouter()
 event_manager = EventManager()
 model_manager = ModelManager()
 ws_manager = WebSocketManager()
+bunq = BunqService()
 
 # --- Request Models ---
 class CreateEventRequest(BaseModel):
@@ -100,7 +102,10 @@ def add_participant(event_id: str, req: AddParticipantRequest):
 def finalize_event(event_id: str, req: FinalizeRequest):
     try:
         result = event_manager.finalize_event(event_id, req.admin_id, model_manager)
-        return {"status": "finalized", "result": result}
+
+        settlement = result["settlement"]
+        #result = bunq.send_requests(settlement, email_lookup)
+        return {"status": "finalized", "result": settlement}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

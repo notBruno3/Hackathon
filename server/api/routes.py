@@ -64,7 +64,7 @@ async def add_message(event_id: str, req: AddMessageRequest):
             "transactions": [vars(t) for t in transactions]
         }))
 
-        return {"status": "ok", "transactions": [vars(t) for t in transactions]}
+        return "Hola"
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     

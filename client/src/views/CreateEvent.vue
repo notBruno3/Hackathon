@@ -42,7 +42,7 @@
         const response = await fetch("http://127.0.0.1:8000/event", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ event_name: this.eventName, admin_name: "Alice", admin_id:  this.globalUid})
+          body: JSON.stringify({ event_name: this.eventName, admin_name: "You", admin_id:  this.globalUid})
         });
 
         if (!response.ok) {
@@ -75,9 +75,31 @@
       }
     },
 
-    goToEvent(id) {
+    async goToEvent(id) {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/event/${id}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch event status');
+      }
+
+      const event = await response.json();
+
+      if (!event.is_active) {
+        alert('This event has already been finalized and can no longer be joined.');
+        return;
+      }
+
       this.$router.push(`/chat/${id}`);
+    } catch (error) {
+      console.error(error);
+      alert('Could not check event status. Please try again later.');
     }
+  }
+
     },
     mounted() {
       this.fetchEvents();

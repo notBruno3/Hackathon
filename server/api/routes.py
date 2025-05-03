@@ -132,8 +132,7 @@ def get_event(event_id: str):
             "is_active": event.is_active,
             "admin": event.admin.name,
             "participants": event.participants,
-            "message_count": len(event.messages),
-            "transaction_count": len(event.transactions)
+            "message_count": event.messages
         }
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))

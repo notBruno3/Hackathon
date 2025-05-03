@@ -2,8 +2,8 @@ from typing import List
 from uuid import uuid4
 
 class Participant:
-    def __init__(self, name: str, aliases: List[str] = None, role: str = "member"):
-        self.id = str(uuid4())
+    def __init__(self, name: str, aliases: List[str] = None, role: str = "member", id : str = None):
+        self.id = id
         self.name = name  # Canonical name, e.g., "Samu García"
         self.aliases = aliases or []  # e.g., ["Samu", "Sam"]
         self.role = role  # "admin" or "member"

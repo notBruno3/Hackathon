@@ -28,11 +28,11 @@ class Event:
         self.messages.append(message)
 
         # Run model to extract transactions
-        extracted = model_manager.extract_transactions(
-            message=message,
-            participants=self.participants
-        )
-
+        extracted = []
+        # model_manager.extract_transactions(
+        #     message=message,
+        #     participants=self.participants
+        # )
         # Attach source message ID to each transaction and store them
         for tx in extracted:
             tx.source_message_id = message.id

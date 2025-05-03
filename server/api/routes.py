@@ -1,20 +1,23 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from uuid import uuid4
 from core.participant import Participant
 from core.message import Message
 from core.event_manager import EventManager
+from services.websocket_manager import WebSocketManager
 
 from services.model_manager import ModelManager
 
 router = APIRouter()
 event_manager = EventManager()
 model_manager = ModelManager()
+ws_manager = WebSocketManager()
 
 # --- Request Models ---
 class CreateEventRequest(BaseModel):
     event_name: str
     admin_name: str
+    admin_id: str
 
 class AddMessageRequest(BaseModel):
     sender_id: str
@@ -26,12 +29,16 @@ class AddParticipantRequest(BaseModel):
 class FinalizeRequest(BaseModel):
     admin_id: str
 
+class JoinRequest(BaseModel):
+    name: str
+    id: str
+
 # --- Routes ---
 
 ############### POST REQS ##############
 @router.post("/event")
 def create_event(req: CreateEventRequest):
-    admin = Participant(name=req.admin_name)
+    admin = Participant(name=req.admin_name, role="admin", id=req.admin_id)
     event = event_manager.create_event(req.event_name, admin)
     return {
         "event_id": event.id,
@@ -40,10 +47,23 @@ def create_event(req: CreateEventRequest):
     }
 
 @router.post("/event/{event_id}/message")
-def add_message(event_id: str, req: AddMessageRequest):
+async def add_message(event_id: str, req: AddMessageRequest):
     message = Message(sender_id=req.sender_id, text=req.text)
     try:
         transactions = event_manager.add_message_to_event(event_id, message, model_manager)
+
+        import asyncio
+        asyncio.create_task(ws_manager.broadcast(event_id, {
+            "type": "new_message",
+            "message": {
+                "id": message.id,
+                "sender_id": message.sender_id,
+                "text": message.text,
+                "timestamp": message.timestamp
+            },
+            "transactions": [vars(t) for t in transactions]
+        }))
+
         return {"status": "ok", "transactions": [vars(t) for t in transactions]}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -73,6 +93,23 @@ def finalize_event(event_id: str, req: FinalizeRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
+@router.post("/event/{event_id}/join")
+def join_event(event_id: str, req: JoinRequest):
+    participant = Participant(name=req.name, id=req.id)
+    try:
+        added = event_manager.add_participant_to_event(event_id, participant)
+        return {
+            "status": "joined",
+            "participant": {
+                "id": added.id,
+                "name": added.name,
+                "aliases": added.aliases,
+                "role": added.role
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 ############### GET REQS ##############
 @router.get("/events")
@@ -127,3 +164,13 @@ def get_messages(event_id: str):
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
 
+############### WEBSOCKET ###############
+
+@router.websocket("/ws/{event_id}")
+async def websocket_endpoint(websocket: WebSocket, event_id: str):
+    await ws_manager.connect(event_id, websocket)
+    try:
+        while True:
+            await websocket.receive_text()  # optional: keep alive
+    except WebSocketDisconnect:
+        ws_manager.disconnect(event_id, websocket)

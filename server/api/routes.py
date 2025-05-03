@@ -125,7 +125,7 @@ def get_event(event_id: str):
             "name": event.name,
             "is_active": event.is_active,
             "admin": event.admin.name,
-            "participants": [p.name for p in event.participants],
+            "participants": event.participants,
             "message_count": len(event.messages),
             "transaction_count": len(event.transactions)
         }

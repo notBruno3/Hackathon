@@ -208,7 +208,9 @@ export default {
         hash = id.charCodeAt(i) + ((hash << 5) - hash);
       }
       const hue = Math.abs(hash) % 360;
-      return `hsl(${hue}, 70%, 60%)`;
+      const saturation = 60; // pastel-style saturation
+      const lightness = 85;  // high lightness for good contrast with black text
+      return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   },
     requestInterceptor(details) {
       const firstMsg = details.body.messages?.[0];
@@ -263,13 +265,13 @@ export default {
           } else if (msg.sender_id === this.globalUid) {
             role = 'user';
           }  else {
-          role = `user-${msg.sender_id}`;
-          if (!this.messageStyles.default[role]) {
-            this.messageStyles.default[role] = {
-              bubble: { backgroundColor: this.generateColorFromId(msg.sender_id) }
-            };
+            role = `user-${msg.sender_id}`;
+            if (!this.messageStyles.default[role]) {
+              this.messageStyles.default[role] = {
+                bubble: { backgroundColor: this.generateColorFromId(msg.sender_id) }
+              };
+            }
           }
-        }
 
           return {
             text: msg.text,
@@ -291,16 +293,32 @@ export default {
 
       this.ws.onmessage = (event) => {
         try {
-          // console.log(event)
           const data = JSON.parse(event.data);
 
           if (data?.message.text) {
+            let role;
+
+            const senderId = data.message.sender_id;
+            if (senderId === '0') {
+              role = 'ai';
+            } else if (senderId === this.globalUid) {
+              role = 'user';
+            } else {
+              role = `user-${senderId}`;
+              if (!this.messageStyles.default[role]) {
+                this.messageStyles.default[role] = {
+                  bubble: {
+                    backgroundColor: this.generateColorFromId(senderId)
+                  }
+                };
+              }
+            }
 
             this.history.push({
               text: data.message.text,
-              role: data.message.sender_id === this.globalUid ? 'user' : 'ai'
+              role
             });
-            this.history = [...this.history];
+            this.history = [...this.history]; // Force reactivity
           }
         } catch (err) {
           console.error("Failed to parse WebSocket message", err);

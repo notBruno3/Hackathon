@@ -15,13 +15,13 @@
       </div>
 
       <deep-chat
+        ref="chatRef"
         class="chat-component"
         :textInput="textInput"
         :messageStyles="messageStyles"
         :microphone="microphone"
         :submitButtonStyles="submitButtonStyles"
         :history="history"
-        demo="true"
         :connect="{
           url: `http://localhost:8000/event/${eventId}/message`,
           method: 'POST',
@@ -226,40 +226,39 @@ export default {
         const data = await response.json();
         this.eventName = data.name;
         this.users = data.participants;
+        console.log(data)
       } catch (err) {
         console.error('Failed to fetch event details:', err);
         this.eventName = 'Unknown Event';
       }
     },
     connectWebSocket() {
-      const wsUrl = `ws://127.0.0.1:8000/ws/${this.eventId}`;
-      this.ws = new WebSocket(wsUrl);
-
-      this.ws.onopen = () => {
-        console.log('WebSocket connection opened');
-      };
+      this.ws = new WebSocket(`ws://localhost:8000/ws/${this.eventId}`);
 
       this.ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+        try {
+          // console.log(event)
+          const data = JSON.parse(event.data);
 
-      if (data.message) {
-        this.history.push({
-          text: data.message,
-          role: 'user' // or 'ai' if you want to distinguish
-        });
-      }
+          if (data?.message.text) {
 
-      console.log('WebSocket message:', data);
+            this.history.push({
+              text: data.message.text,
+              role: data.message.sender_id === this.globalUid ? 'user' : 'ai'
+            });
+            this.history = [...this.history];
+          }
+        } catch (err) {
+          console.error("Failed to parse WebSocket message", err);
+        }
       };
 
-      this.ws.onerror = (error) => {
-        console.error(' WebSocket error:', error);
-      };
+      this.ws.onopen = () => console.log("WebSocket connected");
+      this.ws.onerror = (e) => console.error("WebSocket error", e);
+      this.ws.onclose = () => console.log("WebSocket closed");
 
-      this.ws.onclose = () => {
-        console.log(' WebSocket connection closed');
-      };
     }
+    
   }
 };
 </script>

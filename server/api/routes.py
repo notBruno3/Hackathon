@@ -70,7 +70,7 @@ async def add_message(event_id: str, req: AddMessageRequest):
         }))
 
 
-        return {"status": "ok"}
+        return []
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     

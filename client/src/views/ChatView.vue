@@ -69,6 +69,7 @@ export default {
       eventName: '',
       showUserPopup: false,
       users: [],
+      result: [],
       ws: null, // WebSocket connection
       history: [  
       { text: 'New event created! Add your expenses', role: 'ai' }
@@ -236,7 +237,7 @@ export default {
     },
     async finalizeEvent() {
       try {
-        const response = await fetch(`${baseURL}/event/${this.eventId}/finalize/`, {
+        const response = await fetch(`${baseURL}/event/${this.eventId}/finalize`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ admin_id: this.globalUid })
@@ -247,10 +248,20 @@ export default {
         }
 
         const data = await response.json();
+        console.log(data)
+        const result = data.result;
+
+        if (result.length === 0) {
+          alert('There are no debts to settle!');
+        } else {
+          alert(`Your final balance is: ${result} settlement(s)`);
+        }
+
         this.$router.push('/');
       } catch (error) {
         console.error(error);
         alert('Something went wrong while finalizing the event.');
+        this.$router.push('/');
       }
     },
     async fetchEventDetails() {

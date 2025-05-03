@@ -35,10 +35,10 @@
             <div v-if="showUserPopup" class="user-list-panel">
             <h3>Linked Users</h3>
             <ul class="user-list">
-                <li v-for="user in users" :key="user.iban">
+                <li v-for="user in users">
                 <div class="user-entry">
                     <strong>{{ user.name }}</strong><br />
-                    <span class="iban">{{ user.iban }}</span>
+                    <span class="iban">placeholder</span>
                 </div>
                 </li>
             </ul>
@@ -81,16 +81,18 @@
                 alert('Failed to finalize event.')
               });
           },
-    async fetchEventDetails() {
-      try {
-        const response = await fetch(`http://localhost:8000/event/${this.eventId}`);
-        const data = await response.json();
-        this.eventName = data.name;
-      } catch (err) {
-        console.error('Failed to fetch event details:', err);
-        this.eventName = 'Unknown Event';
+      // for the title and participants
+      async fetchEventDetails() {
+        try {
+          const response = await fetch(`http://localhost:8000/event/${this.eventId}`);
+          const data = await response.json();
+          this.eventName = data.name;
+          this.users = data.participants;
+        } catch (err) {
+          console.error('Failed to fetch event details:', err);
+          this.eventName = 'Unknown Event';
+        }
       }
-    }
   },
     data() {
       return {
@@ -98,10 +100,7 @@
         eventName: '',
         showUserPopup: false,
 
-        users: [
-      { name: 'Alice', iban: 'NL23BUNQ1234567890' },
-      { name: 'Bob', iban: 'NL89BUNQ0987654321' }
-        ],
+        users: [],
         
 
 

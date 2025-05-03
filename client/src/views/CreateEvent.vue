@@ -42,7 +42,7 @@
         const response = await fetch("http://127.0.0.1:8000/event", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ event_name: this.eventName, admin_name: "Alice" })
+          body: JSON.stringify({ event_name: this.eventName, admin_name: "Alice", admin_id:  this.globalUid})
         });
 
         if (!response.ok) {

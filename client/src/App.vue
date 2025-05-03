@@ -1,9 +1,9 @@
 <template>
   <div id="app">
-    <!-- Persistent top-left Peter branding -->
-    <div class="peter-header">
-      <img src="/favicon.ico" alt="Peter" class="peter-logo" />
-      <span class="peter-name">Peter</span>
+    <!-- Persistent top-left Bill branding -->
+    <div class="bill-header">
+      <img src="/favicon.ico" alt="Bill" class="bill-logo" />
+      <span class="bill-name">Bill</span>
     </div>
 
     <transition name="fade-page" mode="out-in">
@@ -29,7 +29,7 @@ export default {
 </script>
 
 <style>
-.peter-header {
+.bill-header {
   position: fixed;
   top: 0;
   left: 0;
@@ -42,13 +42,13 @@ export default {
   border-bottom-right-radius: 12px;
 }
 
-.peter-logo {
+.bill-logo {
   width: 24px;
   height: 24px;
   margin-right: 8px;
 }
 
-.peter-name {
+.bill-name {
   font-weight: bold;
   font-size: 16px;
   color: #c4c4c4;

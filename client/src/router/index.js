@@ -4,9 +4,9 @@ import ChatView from '../views/ChatView.vue';
 import JoinEvent from '../views/JoinEvent.vue';
 
 const routes = [
-  { path: '/', component: CreateEvent, meta: { title: 'Create Event | Peter' } },
-  { path: '/chat/:eventId', component: ChatView, props: true, meta: { title: 'Chat | Peter' } },
-  { path: '/join/:eventId', component: JoinEvent, props: true, meta: { title: 'Join Event | Peter' } }
+  { path: '/', component: CreateEvent, meta: { title: 'Create Event | Bill' } },
+  { path: '/chat/:eventId', component: ChatView, props: true, meta: { title: 'Chat | Bill' } },
+  { path: '/join/:eventId', component: JoinEvent, props: true, meta: { title: 'Join Event | Bill' } }
 ];
 
 const router = createRouter({

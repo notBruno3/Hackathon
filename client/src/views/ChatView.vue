@@ -63,11 +63,14 @@ export default {
   props: ['eventId'],
   data() {
     return {
-      copied: false,
       eventName: '',
       showUserPopup: false,
       users: [],
       ws: null, // WebSocket connection
+      history: [  
+      { text: 'New event created! Add your expenses', role: 'ai' }
+    ],
+
 
       textInput: {
         styles: {

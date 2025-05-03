@@ -64,7 +64,7 @@ async def add_message(event_id: str, req: AddMessageRequest):
             "transactions": [vars(t) for t in transactions]
         }))
 
-        return "Hola"
+        return {"status": "ok", "transactions": [vars(t) for t in transactions]}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     
@@ -112,9 +112,9 @@ def join_event(event_id: str, req: JoinRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 ############### GET REQS ##############
-@router.get("/events/{user_id}")
-def get_events(user_id: str):
-    return event_manager.get_events_by_user(user_id)
+@router.get("/events")
+def get_events():
+    return event_manager.events
 
 @router.get("/event/{event_id}")
 def get_event(event_id: str):

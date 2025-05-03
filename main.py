@@ -1,12 +1,10 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+from api.routes import router
 
-app = FastAPI()
+app = FastAPI(title="FairShare: Group Expense Tracker")
+app.include_router(router)
 
-class EventRequest(BaseModel):
-    description: str  # e.g. "I paid €20 for pizza, Pablo €15 for drinks..."
 
-@app.post("/split")
-def split_event(event: EventRequest):
-    # Placeholder logic
-    return {"message": "We'll split: " + event.description}
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

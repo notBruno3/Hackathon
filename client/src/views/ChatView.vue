@@ -4,7 +4,13 @@
       <div class="chat-header">
         <button class="back-button" @click="goBack">←</button>
         <h2>{{ eventName }}</h2>
-
+        <div class="clipboard-container" @click="copyJoinLink">
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/2838/2838908.png "
+            alt="Copy Link"
+            class="copy-link"
+          />
+        </div>
         <div class="user-icon-container" @click="toggleUserPopup">
           <img
             src="https://cdn-icons-png.flaticon.com/512/8138/8138685.png"
@@ -61,6 +67,10 @@ export default {
       showUserPopup: false,
       users: [],
       ws: null, // WebSocket connection
+      history: [  
+      { text: 'New event created! Add your expenses', role: 'ai' }
+    ],
+
 
       textInput: {
         styles: {
@@ -169,10 +179,7 @@ export default {
             }
           }
         }
-      },
-      history: [
-        { text: 'New event created! Add your expenses', role: 'ai' },
-      ]
+      }
     };
   },
   mounted() {
@@ -185,6 +192,26 @@ export default {
     }
   },
   methods: {
+    copyJoinLink() {
+      const joinLink = `http://localhost:5173/join/${this.eventId}`;
+      navigator.clipboard.writeText(joinLink)
+        .then(() => {
+          alert('Join link copied to clipboard!');
+        })
+        .catch(err => {
+          console.error('Failed to copy text: ', err);
+        });
+      },
+    generateColorFromId(id) {
+      let hash = 0;
+      for (let i = 0; i < id.length; i++) {
+        hash = id.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const hue = Math.abs(hash) % 360;
+      const saturation = 60; // pastel-style saturation
+      const lightness = 85;  // high lightness for good contrast with black text
+      return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  },
     requestInterceptor(details) {
       const firstMsg = details.body.messages?.[0];
       if (firstMsg) {
@@ -198,7 +225,10 @@ export default {
     goBack() {
       this.$router.push('/');
     },
-    toggleUserPopup() {
+    async toggleUserPopup() {
+      const response = await fetch(`http://localhost:8000/event/${this.eventId}/participants`);
+      this.users = await response.json();
+
       this.showUserPopup = !this.showUserPopup;
     },
     async finalizeEvent() {
@@ -226,7 +256,33 @@ export default {
         const data = await response.json();
         this.eventName = data.name;
         this.users = data.participants;
-        console.log(data)
+
+        // Process message history
+        const formattedMessages = data.message_history.map(msg => {
+          let role;
+          if (msg.sender_id === '0') {
+            role = 'ai';
+          } else if (msg.sender_id === this.globalUid) {
+            role = 'user';
+          }  else {
+            role = `user-${msg.sender_id}`;
+            if (!this.messageStyles.default[role]) {
+              this.messageStyles.default[role] = {
+                bubble: { backgroundColor: this.generateColorFromId(msg.sender_id) }
+              };
+            }
+          }
+
+          return {
+            text: msg.text,
+            role
+          };
+        });
+
+        this.history = formattedMessages;
+        this.history = [...this.history]; // Force reactivity refresh
+
+        console.log("Loaded history:", this.history);
       } catch (err) {
         console.error('Failed to fetch event details:', err);
         this.eventName = 'Unknown Event';
@@ -237,16 +293,32 @@ export default {
 
       this.ws.onmessage = (event) => {
         try {
-          // console.log(event)
           const data = JSON.parse(event.data);
 
           if (data?.message.text) {
+            let role;
+
+            const senderId = data.message.sender_id;
+            if (senderId === '0') {
+              role = 'ai';
+            } else if (senderId === this.globalUid) {
+              role = 'user';
+            } else {
+              role = `user-${senderId}`;
+              if (!this.messageStyles.default[role]) {
+                this.messageStyles.default[role] = {
+                  bubble: {
+                    backgroundColor: this.generateColorFromId(senderId)
+                  }
+                };
+              }
+            }
 
             this.history.push({
               text: data.message.text,
-              role: data.message.sender_id === this.globalUid ? 'user' : 'ai'
+              role
             });
-            this.history = [...this.history];
+            this.history = [...this.history]; // Force reactivity
           }
         } catch (err) {
           console.error("Failed to parse WebSocket message", err);
@@ -418,7 +490,6 @@ export default {
 .user-icon {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
   filter: brightness(70%) invert(1) saturate(0%) contrast(10%);
   transition: transform 0.2s;
 }
@@ -496,7 +567,24 @@ export default {
     );
     width: 100%;
     overflow: hidden;
-    
   }
+
+
+.clipboard-container {
+  margin-left: auto;
+  cursor: pointer;
+}
+
+.copy-link {
+  width: 25px;
+  height: 25px;
+  filter: brightness(70%) invert(1) saturate(0%) contrast(10%);
+  transition: transform 0.2s;
+}
+
+.copy-link:hover {
+  transform: scale(1.1);
+  filter: brightness(1000%) invert(1) saturate(0%) contrast(10000%);
+}
   </style>
   

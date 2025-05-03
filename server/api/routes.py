@@ -42,6 +42,11 @@ class JoinRequest(BaseModel):
 def create_event(req: CreateEventRequest):
     admin = Participant(name=req.admin_name, role="admin", id=req.admin_id)
     event = event_manager.create_event(req.event_name, admin)
+
+    # Add initial message
+    initial_message = Message(sender_id="0", text="New event created! Add your expenses")
+    event.messages.append(initial_message)
+
     return {
         "event_id": event.id,
         "admin_id": admin.id,
@@ -137,8 +142,7 @@ def get_event(event_id: str):
             "is_active": event.is_active,
             "admin": event.admin.name,
             "participants": event.participants,
-            "message_count": len(event.messages),
-            "transaction_count": len(event.transactions)
+            "message_history": event.messages
         }
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))

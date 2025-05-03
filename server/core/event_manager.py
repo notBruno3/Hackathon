@@ -30,7 +30,7 @@ class EventManager:
             if any(p.id == user_id for p in event.participants)
         ]
 
-    def add_message_to_event(self, event_id: str, message: Message, model_manager: ModelManager) -> List[Transaction]:
+    def add_message_to_event(self, event_id: str, message: Message, model_manager: ModelManager) -> Message:
         event = self.get_event(event_id)
         if not event.is_active:
             raise RuntimeError("Cannot add messages to a closed event")

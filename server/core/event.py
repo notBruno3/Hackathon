@@ -23,22 +23,23 @@ class Event:
         self.participants.append(participant)
         return participant
 
-    def add_message(self, message: Message, model_manager: ModelManager) -> List[Transaction]:
+    def add_message(self, message: Message, model_manager: ModelManager) -> Message:
         # Add message to log
         self.messages.append(message)
 
         # Run model to extract transactions
-        extracted = []
-        # model_manager.extract_transactions(
-        #     message=message,
-        #     participants=self.participants
-        # )
+        extracted, answer = model_manager.extract_transactions(
+            message=message,
+            participants=self.participants
+        )
+        
         # Attach source message ID to each transaction and store them
         for tx in extracted:
             tx.source_message_id = message.id
             self.transactions.append(tx)
 
-        return extracted
+        self.messages.append(answer)
+        return answer
 
     def end_event(self, model_manager: ModelManager) -> Dict:
         if not self.is_active:

@@ -50,21 +50,27 @@ def create_event(req: CreateEventRequest):
 async def add_message(event_id: str, req: AddMessageRequest):
     message = Message(sender_id=req.sender_id, text=req.text)
     try:
-        transactions = event_manager.add_message_to_event(event_id, message, model_manager)
+        answer = event_manager.add_message_to_event(event_id, message, model_manager)
 
         import asyncio
         asyncio.create_task(ws_manager.broadcast(event_id, {
-            "type": "new_message",
             "message": {
                 "id": message.id,
                 "sender_id": message.sender_id,
-                "text": message.text,
-                "timestamp": message.timestamp
-            },
-            "transactions": [vars(t) for t in transactions]
+                "text": message.text
+            }
         }))
 
-        return {"status": "ok", "transactions": [vars(t) for t in transactions]}
+        asyncio.create_task(ws_manager.broadcast(event_id, {
+            "message": {
+                "id": answer.id,
+                "sender_id": answer.sender_id,
+                "text": answer.text
+            }
+        }))
+
+
+        return {"status": "ok"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     

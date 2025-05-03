@@ -12,6 +12,9 @@ export default defineConfig({
       }
     })
   ],
+  server: {
+    allowedHosts: ['916c-31-207-9-142.ngrok-free.app'] // <-- add this line
+  },
   test: {
     globals: true,
     environment: 'jsdom',

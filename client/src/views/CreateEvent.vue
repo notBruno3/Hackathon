@@ -22,7 +22,9 @@
     </div>
   </template>
   
-  <script>
+<script>
+const baseURL = import.meta.env.VITE_API_URL;
+
   export default {
     inject: ['globalUid'],
     data() {
@@ -39,7 +41,7 @@
       }
 
       try {
-        const response = await fetch("http://127.0.0.1:8000/event", {
+        const response = await fetch(`${baseURL}/event`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ event_name: this.eventName, admin_name: "You", admin_id:  this.globalUid})
@@ -61,7 +63,7 @@
       
     async fetchEvents() {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/events/${this.globalUid}`, {
+        const response = await fetch(`${baseURL}/events/${this.globalUid}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json"
@@ -77,7 +79,7 @@
 
     async goToEvent(id) {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/event/${id}`, {
+      const response = await fetch(`${baseURL}/event/${id}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });

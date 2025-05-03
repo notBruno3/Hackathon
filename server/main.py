@@ -7,7 +7,7 @@ app = FastAPI(title="FairShare: Group Expense Tracker")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # ← change to your frontend port if needed
+    allow_origins=["*"],  # ← change to your frontend port if needed
     allow_credentials=True,
     allow_methods=["*"],  # allow POST, GET, OPTIONS, etc.
     allow_headers=["*"]   # allow Content-Type and others

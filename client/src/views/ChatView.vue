@@ -58,6 +58,9 @@
 </template>
 
 <script>
+const baseURL = import.meta.env.VITE_API_URL;
+const wsBaseURL = baseURL.replace(/^http/, 'ws');
+
 export default {
   inject: ['globalUid'],
   props: ['eventId'],
@@ -201,7 +204,7 @@ export default {
         .catch(err => {
           console.error('Failed to copy text: ', err);
         });
-      },
+    },
     generateColorFromId(id) {
       let hash = 0;
       for (let i = 0; i < id.length; i++) {
@@ -226,14 +229,14 @@ export default {
       this.$router.push('/');
     },
     async toggleUserPopup() {
-      const response = await fetch(`http://localhost:8000/event/${this.eventId}/participants`);
+      const response = await fetch(`${baseURL}/event/${this.eventId}/participants`);
       this.users = await response.json();
 
       this.showUserPopup = !this.showUserPopup;
     },
     async finalizeEvent() {
       try {
-        const response = await fetch(`http://localhost:8000/event/${this.eventId}/finalize/`, {
+        const response = await fetch(`${baseURL}/event/${this.eventId}/finalize/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ admin_id: this.globalUid })
@@ -252,7 +255,7 @@ export default {
     },
     async fetchEventDetails() {
       try {
-        const response = await fetch(`http://localhost:8000/event/${this.eventId}`);
+        const response = await fetch(`${baseURL}/event/${this.eventId}`);
         const data = await response.json();
         this.eventName = data.name;
         this.users = data.participants;
@@ -289,7 +292,7 @@ export default {
       }
     },
     connectWebSocket() {
-      this.ws = new WebSocket(`ws://localhost:8000/ws/${this.eventId}`);
+      this.ws = new WebSocket(`${wsBaseURL}/ws/${this.eventId}`);
 
       this.ws.onmessage = (event) => {
         try {

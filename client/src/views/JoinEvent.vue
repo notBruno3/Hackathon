@@ -10,6 +10,8 @@
   </template>
   
   <script>
+const baseURL = import.meta.env.VITE_API_URL;
+
   export default {
     inject: ['globalUid'],
     props: ['eventId'],
@@ -26,7 +28,7 @@
         }
   
         try {
-          const response = await fetch(`http://localhost:8000/event/${this.eventId}/join`, {
+          const response = await fetch(`${baseURL}/event/${this.eventId}/join`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: this.userName, id: this.globalUid })

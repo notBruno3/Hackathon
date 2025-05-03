@@ -134,6 +134,62 @@ What should be appended to the summary now? Return your answer in the required J
         answer = Message("0", result["message_text"])
         return transactions, answer
 
+    def compute_settlement_with_ai(self, transactions: List[Transaction]) -> List[Dict]:
+        """
+        Uses an LLM to compute the minimum number of payments required to settle the debts.
+        Returns a list of dicts: { from, to, amount }
+        """
+        # Convert Transaction objects to raw dicts
+        tx_data = [
+            {
+                "who": tx.payer,
+                "to": tx.payees,
+                "total": tx.amount
+            } for tx in transactions
+        ]
+
+        prompt = f"""
+You are a smart financial assistant.
+Below is a list of individual expense transactions. Each transaction has:
+- who paid,
+- for whom,
+- and how much.
+
+Your task is to compute the smallest possible number of payments between people to make it fair — so that everyone has contributed equally overall.
+
+Each transaction looks like:
+{{ "who": "Alice", "to": ["Bob", "Charlie"], "total": 30 }}
+
+Input transactions:
+{json.dumps(tx_data, indent=2)}
+
+Output ONLY a JSON list of settlement payments, like:
+[
+  {{ "from": "Samu", "to": "Pablo", "amount": 13.33 }},
+  ...
+]
+
+Don't add explanations. Just a valid JSON list.
+"""
+
+        completion = self.client.chat.completions.create(
+            model="openai/gpt-4o",
+            messages=[
+                {"role": "system", "content": "You reduce debt graphs to minimal payment instructions."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2
+        )
+
+        content = completion.choices[0].message.content.strip()
+
+        cleaned = re.sub(r"```(?:json)?\s*([\s\S]*?)\s*```", r"\1", content.strip())
+
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError:
+            raise ValueError(f"Could not parse LLM settlement output as JSON:\n{cleaned}")
+
     def compute_settlement(self, transactions: List[Transaction]) -> List[Dict[str, any]]:
         # You can later swap this with an LLM reasoning pass
         return SettlementEngine.minimize(transactions)

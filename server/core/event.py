@@ -46,7 +46,7 @@ class Event:
             raise RuntimeError("Event is already finalized.")
         self.is_active = False
 
-        settlement = model_manager.compute_settlement(self.transactions)
+        settlement = model_manager.compute_settlement_with_ai(self.transactions)
         return {
             "event_id": self.id,
             "event_name": self.name,

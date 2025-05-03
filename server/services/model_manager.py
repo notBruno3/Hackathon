@@ -44,7 +44,7 @@ Extract transactions. Each transaction must follow this format:
   "total": <amount>
 }}
 
-Respond only with a JSON list of such transactions.
+Respond only with a JSON list of such transactions. Respond only with the json. No ```json code blocks or otherwise. Just, only and simply the json structured as above.
 """
 
         completion = self.client.chat.completions.create(

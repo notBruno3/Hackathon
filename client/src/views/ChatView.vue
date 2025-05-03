@@ -15,20 +15,21 @@
         </div>
   
         <deep-chat
-          class="chat-component"
-          :textInput="textInput"
-          :messageStyles="messageStyles"
-          :microphone="microphone"
-          :submitButtonStyles="submitButtonStyles"
-          :history="history"
-          demo="true"
-          :request="{
-            url: `http://localhost:8000/event/${this.eventId}/message`,
+        class="chat-component"
+        :textInput="textInput"
+        :messageStyles="messageStyles"
+        :microphone="microphone"
+        :submitButtonStyles="submitButtonStyles"
+        :history="history"
+        demo="true"
+        :connect="{
+            url:  `http://localhost:8000/event/${eventId}/message`,
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: { user: 'Alice', event_id: Number(eventId) }
+            additionalBodyProps: {sender_id: globalUid}
           }"
-        />
+
+      />
   
         <!--USER LIST PANEL -->
         <transition name="fade-slide">
@@ -38,7 +39,7 @@
                 <li v-for="user in users">
                 <div class="user-entry">
                     <strong>{{ user.name }}</strong><br />
-                    <span class="iban">placeholder</span>
+                    <span class="iban">Insert IBAN</span>
                 </div>
                 </li>
             </ul>
@@ -54,6 +55,7 @@
   
   <script>
   export default {
+    inject: ['globalUid'],
     props: ['eventId'],
     methods: {
       goBack() {
@@ -62,24 +64,25 @@
       toggleUserPopup() {
             this.showUserPopup = !this.showUserPopup
         },
-      finalizeEvent() {
-          // Replace with actual API call
-          fetch(`http://localhost:8000/${this.eventId}/finalize/`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-              event_id: this.eventId
-              })
-          })
-              .then(res => res.json())
-              .then(data => {
-              console.log('Event finalized:', data)
-                alert('Event finalized successfully!')
-              })
-              .catch(err => {
-                console.error('Error finalizing event:', err)
-                alert('Failed to finalize event.')
-              });
+      async finalizeEvent() {
+        try {
+        const response = await fetch(`http://localhost:8000/event/${this.eventId}/finalize/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ admin_id:  this.globalUid})
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to create event");
+        }
+
+        const data = await response.json();
+        
+        this.$router.push('/');
+      } catch (error) {
+        console.error(error);
+        alert("Something went wrong while creating the event.");
+      }
           },
       // for the title and participants
       async fetchEventDetails() {

@@ -1,229 +1,340 @@
 <template>
-    <div class="chat-view-wrapper">
-      <div class="chat-view-card">
-        <div class="chat-header">
-          <button class="back-button" @click="goBack">←</button>
-          <h2>{{ eventName }}</h2>
-  
-          <div class="user-icon-container" @click="toggleUserPopup">
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/8138/8138685.png"
-              alt="Users"
-              class="user-icon"
-            />
-          </div>
+  <div class="chat-view-wrapper">
+    <div class="chat-view-card">
+      <div class="chat-header">
+        <button class="back-button" @click="goBack">←</button>
+        <h2>{{ eventName }}</h2>
+        <div class="clipboard-container" @click="copyJoinLink">
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/2838/2838908.png "
+            alt="Copy Link"
+            class="copy-link"
+          />
         </div>
-  
-        <deep-chat
+        <div class="user-icon-container" @click="toggleUserPopup">
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/8138/8138685.png"
+            alt="Users"
+            class="user-icon"
+          />
+        </div>
+      </div>
+
+      <deep-chat
+        ref="chatRef"
         class="chat-component"
         :textInput="textInput"
         :messageStyles="messageStyles"
         :microphone="microphone"
         :submitButtonStyles="submitButtonStyles"
         :history="history"
-        demo="true"
         :connect="{
-            url:  `http://localhost:8000/event/${eventId}/message`,
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            additionalBodyProps: {sender_id: globalUid}
-          }"
-
+          url: `http://localhost:8000/event/${eventId}/message`,
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          additionalBodyProps: { sender_id: globalUid },
+        }"
+        :requestInterceptor="requestInterceptor"
       />
-  
-        <!--USER LIST PANEL -->
-        <transition name="fade-slide">
-            <div v-if="showUserPopup" class="user-list-panel">
-            <h3>Linked Users</h3>
-            <ul class="user-list">
-                <li v-for="user in users">
-                <div class="user-entry">
-                    <strong>{{ user.name }}</strong><br />
-                    <span class="iban">Insert IBAN</span>
-                </div>
-                </li>
-            </ul>
-            </div>
-        </transition>
 
-        <button class="finalize-button" @click="finalizeEvent">Finalize Event</button>
+      <!-- USER LIST PANEL -->
+      <transition name="fade-slide">
+        <div v-if="showUserPopup" class="user-list-panel">
+          <h3>Linked Users</h3>
+          <ul class="user-list">
+            <li v-for="user in users" :key="user.id">
+              <div class="user-entry">
+                <strong>{{ user.name }}</strong><br />
+                <span class="iban">Insert IBAN</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </transition>
 
-      </div>
+      <button class="finalize-button" @click="finalizeEvent">Finalize Event</button>
     </div>
-  </template>
-  
-  
-  <script>
-  export default {
-    inject: ['globalUid'],
-    props: ['eventId'],
-    methods: {
-      goBack() {
-        this.$router.push('/')
-      },
-      toggleUserPopup() {
-            this.showUserPopup = !this.showUserPopup
+  </div>
+</template>
+
+<script>
+export default {
+  inject: ['globalUid'],
+  props: ['eventId'],
+  data() {
+    return {
+      eventName: '',
+      showUserPopup: false,
+      users: [],
+      ws: null, // WebSocket connection
+      history: [  
+      { text: 'New event created! Add your expenses', role: 'ai' }
+    ],
+
+
+      textInput: {
+        styles: {
+          container: {
+            borderRadius: '20px',
+            border: 'unset',
+            width: '78%',
+            marginLeft: '-15px',
+            boxShadow:
+              '0px 0.3px 0.9px rgba(0, 0, 0, 0.12), 0px 1.6px 3.6px rgba(0, 0, 0, 0.16)'
+          },
+          text: {
+            padding: '10px',
+            paddingLeft: '15px',
+            paddingRight: '34px'
+          }
         },
-      async finalizeEvent() {
-        try {
+        placeholder: {
+          text: 'Any new expenses?',
+          style: { color: '#606060' }
+        }
+      },
+      messageStyles: {
+        default: {
+          shared: {
+            bubble: {
+              backgroundColor: 'unset',
+              marginTop: '10px',
+              marginBottom: '10px',
+              boxShadow:
+                '0px 0.3px 0.9px rgba(0, 0, 0, 0.12), 0px 1.6px 3.6px rgba(0, 0, 0, 0.16)'
+            }
+          },
+          user: {
+            bubble: {
+              background: 'linear-gradient(130deg, #2870EA 20%, #1B4AEF 77.5%)'
+            }
+          },
+          ai: {
+            bubble: {
+              background: 'rgba(255,255,255,0.7)'
+            }
+          }
+        }
+      },
+      microphone: {
+        button: {
+          default: {
+            container: {
+              default: {
+                bottom: '1em',
+                right: '0.6em',
+                borderRadius: '20px',
+                width: '1.9em',
+                height: '1.9em'
+              }
+            },
+            svg: {
+              styles: {
+                default: {
+                  bottom: '0.35em',
+                  left: '0.35em'
+                }
+              }
+            }
+          },
+          position: 'inside-right'
+        }
+      },
+      submitButtonStyles: {
+        position: 'outside-right',
+        submit: {
+          container: {
+            default: {
+              bottom: '0.8em',
+              borderRadius: '25px',
+              padding: '6px 5px 4px',
+              backgroundColor: 'unset'
+            },
+            hover: {
+              backgroundColor: '#b0deff4f'
+            },
+            click: {
+              backgroundColor: '#b0deffb5'
+            }
+          },
+          svg: {
+            content:
+              '<?xml version="1.0" encoding="utf-8"?><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m21.426 11.095-17-8A.999.999 0 0 0 3.03 4.242L4.969 12 3.03 19.758a.998.998 0 0 0 1.396 1.147l17-8a1 1 0 0 0 0-1.81zM5.481 18.197l.839-3.357L12 12 6.32 9.16l-.839-3.357L18.651 12l-13.17 6.197z"/></svg>',
+            styles: {
+              default: {
+                width: '1.5em',
+                filter:
+                  'brightness(0) saturate(100%) invert(10%) sepia(86%) saturate(6044%) hue-rotate(205deg) brightness(100%) contrast(100%)'
+              }
+            }
+          }
+        },
+        loading: {
+          svg: {
+            styles: {
+              default: {
+                filter:
+                  'brightness(0) saturate(100%) invert(72%) sepia(0%) saturate(3044%) hue-rotate(322deg) brightness(100%) contrast(96%)'
+              }
+            }
+          }
+        }
+      }
+    };
+  },
+  mounted() {
+    this.fetchEventDetails();
+    this.connectWebSocket();
+  },
+  beforeUnmount() {
+    if (this.ws) {
+      this.ws.close();
+    }
+  },
+  methods: {
+    copyJoinLink() {
+      const joinLink = `http://localhost:5173/join/${this.eventId}`;
+      navigator.clipboard.writeText(joinLink)
+        .then(() => {
+          alert('Join link copied to clipboard!');
+        })
+        .catch(err => {
+          console.error('Failed to copy text: ', err);
+        });
+      },
+    generateColorFromId(id) {
+      let hash = 0;
+      for (let i = 0; i < id.length; i++) {
+        hash = id.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const hue = Math.abs(hash) % 360;
+      const saturation = 60; // pastel-style saturation
+      const lightness = 85;  // high lightness for good contrast with black text
+      return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  },
+    requestInterceptor(details) {
+      const firstMsg = details.body.messages?.[0];
+      if (firstMsg) {
+        details.body = {
+          text: firstMsg.text,
+          sender_id: this.globalUid
+        };
+      }
+      return details;
+    },
+    goBack() {
+      this.$router.push('/');
+    },
+    async toggleUserPopup() {
+      const response = await fetch(`http://localhost:8000/event/${this.eventId}/participants`);
+      this.users = await response.json();
+
+      this.showUserPopup = !this.showUserPopup;
+    },
+    async finalizeEvent() {
+      try {
         const response = await fetch(`http://localhost:8000/event/${this.eventId}/finalize/`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ admin_id:  this.globalUid})
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ admin_id: this.globalUid })
         });
 
         if (!response.ok) {
-          throw new Error("Failed to create event");
+          throw new Error('Failed to finalize event');
         }
 
         const data = await response.json();
-        
         this.$router.push('/');
       } catch (error) {
         console.error(error);
-        alert("Something went wrong while creating the event.");
+        alert('Something went wrong while finalizing the event.');
       }
-          },
-      // for the title and participants
-      async fetchEventDetails() {
+    },
+    async fetchEventDetails() {
+      try {
+        const response = await fetch(`http://localhost:8000/event/${this.eventId}`);
+        const data = await response.json();
+        this.eventName = data.name;
+        this.users = data.participants;
+
+        // Process message history
+        const formattedMessages = data.message_history.map(msg => {
+          let role;
+          if (msg.sender_id === '0') {
+            role = 'ai';
+          } else if (msg.sender_id === this.globalUid) {
+            role = 'user';
+          }  else {
+            role = `user-${msg.sender_id}`;
+            if (!this.messageStyles.default[role]) {
+              this.messageStyles.default[role] = {
+                bubble: { backgroundColor: this.generateColorFromId(msg.sender_id) }
+              };
+            }
+          }
+
+          return {
+            text: msg.text,
+            role
+          };
+        });
+
+        this.history = formattedMessages;
+        this.history = [...this.history]; // Force reactivity refresh
+
+        console.log("Loaded history:", this.history);
+      } catch (err) {
+        console.error('Failed to fetch event details:', err);
+        this.eventName = 'Unknown Event';
+      }
+    },
+    connectWebSocket() {
+      this.ws = new WebSocket(`ws://localhost:8000/ws/${this.eventId}`);
+
+      this.ws.onmessage = (event) => {
         try {
-          const response = await fetch(`http://localhost:8000/event/${this.eventId}`);
-          const data = await response.json();
-          this.eventName = data.name;
-          this.users = data.participants;
-        } catch (err) {
-          console.error('Failed to fetch event details:', err);
-          this.eventName = 'Unknown Event';
-        }
-      }
-  },
-    data() {
-      return {
-        
-        eventName: '',
-        showUserPopup: false,
+          const data = JSON.parse(event.data);
 
-        users: [],
-        
+          if (data?.message.text) {
+            let role;
 
-
-        textInput: {
-          styles: {
-            container: {
-              borderRadius: '20px',
-              border: 'unset',
-              width: '78%',
-              marginLeft: '-15px',
-              boxShadow: '0px 0.3px 0.9px rgba(0, 0, 0, 0.12), 0px 1.6px 3.6px rgba(0, 0, 0, 0.16)'
-            },
-            text: {
-              padding: '10px',
-              paddingLeft: '15px',
-              paddingRight: '34px'
-            }
-          },
-          placeholder: {
-            text: 'Any new expenses?',
-            style: { color: '#606060' }
-          }
-        },
-        messageStyles: {
-          default: {
-            shared: {
-              bubble: {
-                backgroundColor: 'unset',
-                marginTop: '10px',
-                marginBottom: '10px',
-                boxShadow: '0px 0.3px 0.9px rgba(0, 0, 0, 0.12), 0px 1.6px 3.6px rgba(0, 0, 0, 0.16)'
-              }
-            },
-            user: {
-              bubble: {
-                background: 'linear-gradient(130deg, #2870EA 20%, #1B4AEF 77.5%)'
-              }
-            },
-            ai: {
-              bubble: {
-                background: 'rgba(255,255,255,0.7)'
-              }
-            }
-          }
-        },
-        microphone: {
-          button: {
-            default: {
-              container: {
-                default: {
-                  bottom: '1em',
-                  right: '0.6em',
-                  borderRadius: '20px',
-                  width: '1.9em',
-                  height: '1.9em'
-                }
-              },
-              svg: {
-                styles: {
-                  default: {
-                    bottom: '0.35em',
-                    left: '0.35em'
+            const senderId = data.message.sender_id;
+            if (senderId === '0') {
+              role = 'ai';
+            } else if (senderId === this.globalUid) {
+              role = 'user';
+            } else {
+              role = `user-${senderId}`;
+              if (!this.messageStyles.default[role]) {
+                this.messageStyles.default[role] = {
+                  bubble: {
+                    backgroundColor: this.generateColorFromId(senderId)
                   }
-                }
+                };
               }
-            },
-            position: 'inside-right'
+            }
+
+            this.history.push({
+              text: data.message.text,
+              role
+            });
+            this.history = [...this.history]; // Force reactivity
           }
-        },
-        submitButtonStyles: {
-          position: 'outside-right',
-          submit: {
-            container: {
-              default: {
-                bottom: '0.8em',
-                borderRadius: '25px',
-                padding: '6px 5px 4px',
-                backgroundColor: 'unset'
-              },
-              hover: {
-                backgroundColor: '#b0deff4f'
-              },
-              click: {
-                backgroundColor: '#b0deffb5'
-              }
-            },
-            svg: {
-              content:
-                '<?xml version="1.0" encoding="utf-8"?><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m21.426 11.095-17-8A.999.999 0 0 0 3.03 4.242L4.969 12 3.03 19.758a.998.998 0 0 0 1.396 1.147l17-8a1 1 0 0 0 0-1.81zM5.481 18.197l.839-3.357L12 12 6.32 9.16l-.839-3.357L18.651 12l-13.17 6.197z"/></svg>',
-              styles: {
-                default: {
-                  width: '1.5em',
-                  filter:
-                    'brightness(0) saturate(100%) invert(10%) sepia(86%) saturate(6044%) hue-rotate(205deg) brightness(100%) contrast(100%)'
-                }
-              }
-            }
-          },
-          loading: {
-            svg: {
-              styles: {
-                default: {
-                  filter:
-                    'brightness(0) saturate(100%) invert(72%) sepia(0%) saturate(3044%) hue-rotate(322deg) brightness(100%) contrast(96%)'
-                }
-              }
-            }
-          },
-        
-        },
-        history: [
-          { text: 'New event created! Add your expenses', role: 'ai' },
-        ]
-      } 
-    }, 
-    mounted() {
-       this.fetchEventDetails(); // Called when component is mounted
+        } catch (err) {
+          console.error("Failed to parse WebSocket message", err);
+        }
+      };
+
+      this.ws.onopen = () => console.log("WebSocket connected");
+      this.ws.onerror = (e) => console.error("WebSocket error", e);
+      this.ws.onclose = () => console.log("WebSocket closed");
+
     }
+    
   }
-  </script>
+};
+</script>
+
   
   <style scoped>
 
@@ -379,7 +490,6 @@
 .user-icon {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
   filter: brightness(70%) invert(1) saturate(0%) contrast(10%);
   transition: transform 0.2s;
 }
@@ -457,7 +567,24 @@
     );
     width: 100%;
     overflow: hidden;
-    
   }
+
+
+.clipboard-container {
+  margin-left: auto;
+  cursor: pointer;
+}
+
+.copy-link {
+  width: 25px;
+  height: 25px;
+  filter: brightness(70%) invert(1) saturate(0%) contrast(10%);
+  transition: transform 0.2s;
+}
+
+.copy-link:hover {
+  transform: scale(1.1);
+  filter: brightness(1000%) invert(1) saturate(0%) contrast(10000%);
+}
   </style>
   

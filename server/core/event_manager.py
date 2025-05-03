@@ -22,6 +22,13 @@ class EventManager:
         if event_id not in self.events:
             raise ValueError(f"Event with ID '{event_id}' not found")
         return self.events[event_id]
+    
+    def get_events_by_user(self, user_id: str) -> List[Event]:
+        return [
+            event
+            for event in self.events.values()
+            if any(p.id == user_id for p in event.participants)
+        ]
 
     def add_message_to_event(self, event_id: str, message: Message, model_manager: ModelManager) -> List[Transaction]:
         event = self.get_event(event_id)

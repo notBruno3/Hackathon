@@ -1,4 +1,4 @@
-# 🧾 Bill — Group Expense Tracker with AI
+# 🧾 Bill - Group Expense Tracker with AI
 
 Bill is a **Vue + FastAPI** powered web app for managing shared expenses in group events. It features an AI agent that helps users log and track their spending intuitively, making cost splitting transparent, fair, and even fun.
 
